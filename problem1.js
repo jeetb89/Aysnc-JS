@@ -1,7 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-function createAndDelete(directoryPath, count) {
+function createFiles(directoryPath, count) {
     const promises = [];
     for (let val = 0; val < count; val++) {
         const filep = `file${val}.json`;
@@ -16,6 +16,17 @@ function createAndDelete(directoryPath, count) {
                 console.log('Failed to create file:', error.message);
             });
 
+        promises.push(createPromise);
+    }
+    return Promise.all(promises).then(() => console.log('All files created successfully!'));
+}
+
+function deleteFiles(directoryPath, count) {
+    const promises = [];
+    for (let val = 0; val < count; val++) {
+        const filep = `file${val}.json`;
+        const jsonfile = path.join(directoryPath, filep);
+
         const deletePromise = fs.unlink(jsonfile)
             .then(() => {
                 console.log(filep, 'deleted');
@@ -24,13 +35,19 @@ function createAndDelete(directoryPath, count) {
                 throw new Error(`Failed to delete ${filep}`);
             });
 
-        promises.push(Promise.allSettled([createPromise, deletePromise]));
+        promises.push(deletePromise);
     }
-    return Promise.all(promises);
+    return Promise.all(promises).then(() => console.log('All files deleted successfully!'));
+}
+
+function createAndDelete(directoryPath, count) {
+    return createFiles(directoryPath, count)
+        .then(() => deleteFiles(directoryPath, count))
+        .catch(error => console.error(error.message));
 }
 
 function createRandomjsonFiles(directoryPath, count) {
-    fs.mkdir(directoryPath)
+    return fs.mkdir(directoryPath)
         .then(() => {
             console.log(`Directory created.`);
             return createAndDelete(directoryPath, count);
