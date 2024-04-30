@@ -4,6 +4,7 @@ const path = require('path');
 async function writeFilePromise(filePath, data) {
     try {
         await fs.writeFile(filePath, data);
+        console.log('File created', filePath);
     } catch (err) {
         throw new Error(`Failed to write file: ${err.message}`);
     }
@@ -12,33 +13,37 @@ async function writeFilePromise(filePath, data) {
 async function unlinkFilePromise(filePath) {
     try {
         await fs.unlink(filePath);
+        console.log(filePath, 'deleted');
     } catch (err) {
         throw new Error(`Failed to delete file: ${err.message}`);
     }
 }
 
 async function createAndDelete(directoryPath, count) {
-    const promises = [];
+    const createPromises = [];
+
+    // Create all files first
     for (let val = 0; val < count; val++) {
         const filep = `file${val}.json`;
         const jsonfile = path.join(directoryPath, filep);
         const jsonData = { random: Math.random() };
 
-        try {
-            await writeFilePromise(jsonfile, JSON.stringify(jsonData));
-            console.log('File created', filep);
-        } catch (error) {
-            console.log('Failed to create file:', error.message);
-        }
-
-        try {
-            await unlinkFilePromise(jsonfile);
-            console.log(filep, 'deleted');
-        } catch (error) {
-            throw new Error(`Failed to delete ${filep}`);
-        }
+        createPromises.push(writeFilePromise(jsonfile, JSON.stringify(jsonData)));
     }
-    return promises;
+
+    // Wait for all files to be created
+    await Promise.all(createPromises);
+
+    // Delete all files
+    const deletePromises = [];
+    for (let val = 0; val < count; val++) {
+        const filep = `file${val}.json`;
+        const jsonfile = path.join(directoryPath, filep);
+        deletePromises.push(unlinkFilePromise(jsonfile));
+    }
+
+    // Wait for all files to be deleted
+    await Promise.all(deletePromises);
 }
 
 async function createRandomjsonFiles(directoryPath, count) {
