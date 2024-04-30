@@ -38,33 +38,35 @@ function unlinkFilePromise(filePath) {
 }
 
 function createAndDelete(directoryPath, count) {
-    const promises = [];
+    const createPromises = [];
     for (let val = 0; val < count; val++) {
         const filep = `file${val}.json`;
         const jsonfile = path.join(directoryPath, filep);
         const jsonData = { random: Math.random() };
 
-        const createPromise = writeFilePromise(jsonfile, JSON.stringify(jsonData))
+        createPromises.push(writeFilePromise(jsonfile, JSON.stringify(jsonData))
             .then(() => {
                 console.log('File created', filep);
-                unlinkFilePromise(jsonfile)
-            .then(() => {
-                console.log(filep, 'deleted');
-            })
-            .catch(() => {
-                throw new Error(`Failed to delete ${filep}`);
-            });
-
+                return jsonfile;
             })
             .catch((error) => {
                 console.log('Failed to create file:', error.message);
-            });
-
-       
-
-        promises.push(Promise.all([createPromise]));
+            }));
     }
-    return Promise.all(promises);
+
+    return Promise.all(createPromises)
+        .then((filePaths) => {
+            const unlinkPromises = filePaths.map((filePath) => {
+                return unlinkFilePromise(filePath)
+                    .then(() => {
+                        console.log(filePath, 'deleted');
+                    })
+                    .catch((err) => {
+                        console.log(`Failed to delete ${filePath}: ${err.message}`);
+                    });
+            });
+            return Promise.all(unlinkPromises);
+        });
 }
 
 function createRandomjsonFiles(directoryPath, count) {
