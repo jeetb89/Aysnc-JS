@@ -40,18 +40,17 @@ function deleteFiles(directoryPath, count) {
     return Promise.all(promises).then(() => console.log('All files deleted successfully!'));
 }
 
-function createAndDelete(directoryPath, count) {
-    return createFiles(directoryPath, count)
-        .then(() => deleteFiles(directoryPath, count))
-        .catch(error => console.error(error.message));
-}
+
 
 function createRandomjsonFiles(directoryPath, count) {
     return fs.mkdir(directoryPath)
         .then(() => {
             console.log(`Directory created.`);
-            return createAndDelete(directoryPath, count);
+            return createFiles(directoryPath, count);
         })
+        .then(() => {
+             return deleteFiles(directoryPath, count)
+            })
         .then(() => console.log("All tasks completed successfully!"))
         .catch(error => console.error(error.message));
 }
